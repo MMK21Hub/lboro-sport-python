@@ -161,7 +161,10 @@ def bootstrap(
                 with BootstrapClient(timeout=timeout) as client:
                     count = client.verify_legend(result.legend)
             _finish(result, count, output, force, as_json, save_raw)
-            err_console.print(f"[dim]Done in {time.perf_counter() - started:.1f}s[/dim]")
+            err_console.print(
+                f"[dim]Done in {time.perf_counter() - started:.1f}s[/dim]",
+                highlight=False,
+            )
             return
 
         with BootstrapClient(
@@ -192,7 +195,10 @@ def bootstrap(
                 count = client.verify_legend(result.legend)
 
         _finish(result, count, output, force, as_json, save_raw)
-        err_console.print(f"[dim]Done in {time.perf_counter() - started:.1f}s[/dim]")
+        err_console.print(
+            f"[dim]Done in {time.perf_counter() - started:.1f}s[/dim]",
+            highlight=False,
+        )
 
     except BootstrapHTTPError as exc:
         err_console.print(f"[red]Backend error:[/red] {exc}")
@@ -306,13 +312,28 @@ def _finish(
     path = write_env(result.legend, Path(output), force=force)
     club_name = result.club.get("name") or result.club.get("klubName") or "unknown"
     module_name = result.legend.module_name or "unknown"
-    console.print(f"[green]Club:[/green] {club_name} ({result.club.get('id', '?')})")
-    console.print(f"[green]Module:[/green] {module_name} ({result.legend.module_id or '?'})")
-    console.print(f"[green]Theme id:[/green] {result.theme_id}")
+    console.print(
+        f"[green]Club:[/green] {club_name} ({result.club.get('id', '?')})",
+        highlight=False,
+    )
+    console.print(
+        f"[green]Module:[/green] {module_name} ({result.legend.module_id or '?'})",
+        highlight=False,
+    )
+    console.print(f"[green]Theme id:[/green] {result.theme_id}", highlight=False)
     if result.screens_visited:
-        console.print(f"[green]Screens visited:[/green] {result.screens_visited}")
+        console.print(
+            f"[green]Screens visited:[/green] {result.screens_visited}",
+            highlight=False,
+        )
     if result.installation_id:
-        console.print(f"[green]App installation:[/green] {result.installation_id}")
+        console.print(
+            f"[green]App installation:[/green] {result.installation_id}",
+            highlight=False,
+        )
     if verified_count is not None:
-        console.print(f"[green]Verified:[/green] {verified_count} activities available")
-    console.print(f"[green]Wrote:[/green] {path}")
+        console.print(
+            f"[green]Verified:[/green] {verified_count} activities available",
+            highlight=False,
+        )
+    console.print(f"[green]Wrote:[/green] {path}", highlight=False)

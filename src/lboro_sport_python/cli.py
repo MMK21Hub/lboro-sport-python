@@ -181,8 +181,14 @@ def sessions(
         return
 
     if not rows:
-        console.print(f"[yellow]No {activity} slots found for {start_day} + {days} days.[/yellow]")
-        console.print("[dim]Try --include-full, a later --date, or more --days.[/dim]")
+        console.print(
+            f"[yellow]No {activity} slots found for {start_day} + {days} days.[/yellow]",
+            highlight=False,
+        )
+        console.print(
+            "[dim]Try --include-full, a later --date, or more --days.[/dim]",
+            highlight=False,
+        )
         return
 
     _print_slots(rows, days, wide=wide)
@@ -447,7 +453,10 @@ def _print_slots(rows: list[dict[str, Any]], days: int, *, wide: bool = False) -
 
     kinds = {kind for kind, _ in (_split_activity(row.get("activity")) for row in rows) if kind}
     common_kind = next(iter(kinds)) if len(kinds) == 1 else ""
-    console.print(f"[bold]{common_kind or 'Available slots'}[/bold]  [dim]{summary}[/dim]")
+    console.print(
+        f"[bold]{common_kind or 'Available slots'}[/bold]  [dim]{summary}[/dim]",
+        highlight=False,
+    )
 
     longest_activity = max(
         (len(_display_activity(row.get("activity"), common_kind)) for row in rows),
@@ -460,7 +469,8 @@ def _print_slots(rows: list[dict[str, Any]], days: int, *, wide: bool = False) -
         count = len(day_rows)
         console.print(
             f"[bold]{_date_label(date_value)}[/bold]  "
-            f"[dim]{count} {'slot' if count == 1 else 'slots'}[/dim]"
+            f"[dim]{count} {'slot' if count == 1 else 'slots'}[/dim]",
+            highlight=False,
         )
 
         if wide:
@@ -492,7 +502,7 @@ def _print_slots(rows: list[dict[str, Any]], days: int, *, wide: bool = False) -
 
     zones = sorted({row["timezone"] for row in rows if row.get("timezone")})
     if len(zones) == 1:
-        console.print(f"\n[dim]Times in {zones[0]}[/dim]")
+        console.print(f"\n[dim]Times in {zones[0]}[/dim]", highlight=False)
 
 
 if __name__ == "__main__":
