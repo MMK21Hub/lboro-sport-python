@@ -1,0 +1,43 @@
+[project]
+name = "lboro-sport-python"
+version = "0.1.0"
+description = "A small, typed Python client for the Lboro Sport (Legend) facility-hire API."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cryptography>=43.0.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "rich>=13.9.0",
+    "typer>=0.15.0",
+]
+
+[project.scripts]
+lboro-bootstrap = "lboro_sport_python.bootstrap_cli:main"
+lboro-sessions = "lboro_sport_python.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "respx>=0.22.0",
+    "ruff>=0.9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lboro_sport_python"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

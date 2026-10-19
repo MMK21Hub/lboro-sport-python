@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(jadx:*)",
+      "Shell(apktool:*)",
+      "Shell(mkdir:*)",
+      "Shell(uv:*)",
+      "Shell(awk:*)",
+      "Shell(head:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}
