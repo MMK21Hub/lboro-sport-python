@@ -48,8 +48,8 @@ def sessions(
     ] = None,
     days: Annotated[
         int,
-        typer.Option("--days", "-n", min=1, max=31, help="Number of days to search."),
-    ] = 1,
+        typer.Option("--days", "-n", min=1, help="Number of days to search."),
+    ] = 5,
     activity_id: Annotated[
         str | None,
         typer.Option("--activity-id", help="Skip activity lookup and use this identifier."),
