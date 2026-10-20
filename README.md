@@ -1,8 +1,10 @@
 # `lboro-sport-python`
 
-A Python API Client for the Loughborough Sport (Legend Online Services // myFitApp) service, based on the Android app's behaviour.
+A Python API Client for the Loughborough Sport (Legend Online Services // myFitApp) service, modelled on the [Android app](https://www.lboro.ac.uk/sport/app/)'s behaviour.
 
-(Lowkey forgot that there was a web app that would've been way easier to reverse engineer)
+(Low-key forgot that there also exists a web app which would've been way easier to reverse engineer)
+
+![Screenshot of the CLI being used: uv run get_available_sessions.py --activity badminton --days 2](assets/screenshot.png)
 
 ## Usage
 
