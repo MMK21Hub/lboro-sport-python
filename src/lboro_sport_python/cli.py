@@ -196,7 +196,7 @@ def sessions(
 
 def _load_settings() -> Settings:
     try:
-        return Settings()
+        return Settings()  # type: ignore - these get filled in from env
     except ValidationError as exc:
         err_console.print("[red]Invalid or missing configuration.[/red]")
         for error in exc.errors():
@@ -225,7 +225,7 @@ def _resolve_activity(
     if activity_id:
         chosen = next((c for c in concepts if c.identifier == activity_id), None)
         if chosen is None:
-            chosen = ActivityConcept(identifier=activity_id, pref_label=activity)
+            chosen = ActivityConcept(identifier=activity_id, prefLabel=activity)
         matches = [chosen]
     else:
         exact = [

@@ -20,9 +20,9 @@ def test_parse_api_datetime_accepts_offsets_and_z() -> None:
 
 
 def test_parse_iso_duration() -> None:
-    assert parse_iso_duration("PT60M").total_seconds() == 3600
-    assert parse_iso_duration("PT1H30M").total_seconds() == 5400
-    assert parse_iso_duration("P1DT2H").total_seconds() == 93600
+    assert parse_iso_duration("PT60M").total_seconds() == 3600  # type: ignore
+    assert parse_iso_duration("PT1H30M").total_seconds() == 5400  # type: ignore
+    assert parse_iso_duration("P1DT2H").total_seconds() == 93600  # type: ignore
     assert parse_iso_duration("nonsense") is None
     assert parse_iso_duration(None) is None
 
