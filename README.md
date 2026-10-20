@@ -5,6 +5,7 @@ A Python API Client for the Loughborough Sport (Legend Online Services // myFitA
 (Low-key forgot that there also exists a web app which would've been way easier to reverse engineer. Oh well.)
 
 ![Screenshot of the CLI being used: uv run get_available_sessions.py --activity badminton --days 2](assets/screenshot.png)
+![Screenshot of a specific activity being fetched](assets/screenshot-2.png)
 
 ## Usage
 
