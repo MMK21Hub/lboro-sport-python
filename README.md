@@ -1,6 +1,6 @@
 # `lboro-sport-python`
 
-A Python API Client for the Loughborough Sport (Legend Online Services // myFitApp) service, modelled on the [Android app](https://www.lboro.ac.uk/sport/app/)'s behaviour.
+An unofficial Python API Client for the Loughborough Sport (Legend Online Services // myFitApp) service, modelled on the [official Android app](https://www.lboro.ac.uk/sport/app/)'s behaviour.
 
 (Low-key forgot that there also exists a web app which would've been way easier to reverse engineer. Oh well.)
 
@@ -74,6 +74,12 @@ uv run ruff check .
 
 ## Credits
 
-Heavily vibecoded by Mish using Command Code and DeepSeek V4.1. Sorry not sorry. As such, licensed under CC-0 - do what you like as long as you don't me responsible.
+Heavily vibecoded by Mish using Command Code and DeepSeek V4.1. Sorry not sorry. As such, licensed under CC0 - do what you like as long as you don't me responsible.
 
 README written by me.
+
+## Disclaimer
+
+This software provides an interface to certain [Legend Online Services](https://www.legendware.co.uk/) and [myFitApp](https://www.myfitapp.com/) APIs, but is not affiliated, endorsed, or supported by those software providers, or Loughborough University. I suggest using the official app/website to verify that the data it provides is accurate.
+
+As per the CC0 license, this software is provided as-is and any usage is at your own risk.

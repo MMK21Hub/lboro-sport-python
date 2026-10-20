@@ -3,7 +3,8 @@ name = "lboro-sport-python"
 version = "0.1.0"
 description = "A small, typed Python client for the Lboro Sport (Legend) facility-hire API."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
+license = "MIT"
 dependencies = [
     "cryptography>=43.0.0",
     "httpx>=0.28.1",
@@ -18,11 +19,7 @@ lboro-bootstrap = "lboro_sport_python.bootstrap_cli:main"
 lboro-sessions = "lboro_sport_python.cli:main"
 
 [dependency-groups]
-dev = [
-    "pytest>=8.3.0",
-    "respx>=0.22.0",
-    "ruff>=0.9.0",
-]
+dev = ["pytest>=8.3.0", "respx>=0.22.0", "ruff>=0.9.0"]
 
 [build-system]
 requires = ["hatchling"]
