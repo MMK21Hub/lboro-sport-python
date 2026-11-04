@@ -7,6 +7,7 @@ import binascii
 import json
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -23,6 +24,8 @@ from .models import (
     SlotDetail,
     format_api_datetime,
 )
+
+_RECORD_DIR = Path("logs")
 
 
 class LegendError(Exception):
@@ -276,6 +279,24 @@ class LegendClient:
                 body=response.text,
             ) from exc
 
+    def _record(self, event: str, payload: Any) -> None:
+        """Save the raw JSON the API returned, before it is coerced into models.
+
+        Models ignore unknown fields, so this preserves anything the client does
+        not recognise (for example payment details) for later inspection.
+        """
+        _RECORD_DIR.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+        path = _RECORD_DIR / f"{stamp}-{event}.json"
+        suffix = 1
+        while path.exists():
+            path = _RECORD_DIR / f"{stamp}-{event}-{suffix}.json"
+            suffix += 1
+        path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
+
     # ------------------------------------------------------------------
     # Facility hire
     # ------------------------------------------------------------------
@@ -318,6 +339,7 @@ class LegendClient:
     def create_order(self) -> Order:
         """Create (or return) the member's active basket."""
         payload = self._request("POST", "/orders", json_body={}, require_user=True)
+        self._record("create_order", payload)
         return Order.model_validate(payload)
 
     def add_facility_use(
@@ -336,6 +358,7 @@ class LegendClient:
             json_body={"slot": slot},
             require_user=True,
         )
+        self._record("add_facility_use", payload)
         return OrderItem.model_validate(payload)
 
     def confirm_order(self, order_id: str) -> Order:
@@ -346,6 +369,7 @@ class LegendClient:
             json_body={"orderStatus": "Active"},
             require_user=True,
         )
+        self._record("confirm_order", payload)
         return Order.model_validate(payload)
 
     # ------------------------------------------------------------------

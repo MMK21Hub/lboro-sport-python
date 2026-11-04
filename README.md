@@ -63,6 +63,12 @@ The Python client is not currently exported as a library, but I'm sure you can f
 
 - Activity ID for badminton at the Badminton Centre: `d4aab7d1-39cb-4772-8d48-ae670c1469d4`
 
+### Dive into booking API responses
+
+When booking a session, API responses are saved as JSON files to `./logs/`, so any extra data returned by the API can be checked if needed.
+
+File format is `<timestamp>-<event>.json`.
+
 ### Tests and linting
 
 You can tell that I didn't code this project because it actually has tests.

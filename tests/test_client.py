@@ -1,6 +1,7 @@
 import base64
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 import httpx
 import pytest
@@ -114,7 +115,8 @@ def test_api_errors_are_mapped() -> None:
 
 
 @respx.mock
-def test_add_facility_use_sends_slot_and_facilities() -> None:
+def test_add_facility_use_sends_slot_and_facilities(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     respx.post(TOKEN_URL).mock(
         return_value=httpx.Response(200, json={"access_token": "user-token", "expires_in": 3600})
     )
