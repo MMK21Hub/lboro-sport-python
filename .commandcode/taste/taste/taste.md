@@ -12,3 +12,5 @@
 - Wants to be "grilled" — asked clarifying questions on technical and non-technical design decisions — before the agent starts significant work, so choices are made explicitly (via Q&A) rather than silently assumed. Confidence: 0.75
 - Prefers reusing existing code and refactoring over duplicating logic when extending features (e.g. explicitly asking the agent to "reuse code and refactor if required" for new subcommands). Confidence: 0.6
 - When debugging errors, wants read-only investigation via existing local log files rather than live API calls or reproducing the flow (which for this booking tool can trigger side effects). Confidence: 0.5
+- Prefers developing and testing against mocked API responses (e.g. `respx`/`httpx` mocks) rather than hitting the real live API, which can trigger side effects. Confidence: 0.7
+- Wants CLI output to be user-friendly and helpful: guiding the user with actionable context (e.g. "basket held for 20 minutes") and interactive elements like clickable hyperlinks rather than bare plain text. Confidence: 0.55

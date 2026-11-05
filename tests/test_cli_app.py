@@ -72,6 +72,7 @@ def test_bare_invocation_shows_help() -> None:
     result = runner.invoke(app, [])
     assert "Usage" in result.stdout
     assert "sessions" in result.stdout
+    assert "basket" in result.stdout
 
 
 def test_bare_sessions_shows_help() -> None:
@@ -143,7 +144,8 @@ def test_sessions_search_prints_json(monkeypatch) -> None:
 
 
 @respx.mock
-def test_sessions_book_books_the_selected_slot(monkeypatch) -> None:
+def test_sessions_book_reserves_and_surfaces_checkout_url(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     _configure_env(monkeypatch, with_user=True)
     _mock_slot_listing()
     respx.get("https://legend.test/api/facility-uses/slots/slot-1").mock(
@@ -158,8 +160,19 @@ def test_sessions_book_books_the_selected_slot(monkeypatch) -> None:
             },
         )
     )
+    padding = "x" * 120
     order_route = respx.post("https://legend.test/api/orders").mock(
-        return_value=httpx.Response(200, json={"identifier": "order-1", "orderStatus": "Basket"})
+        return_value=httpx.Response(
+            200,
+            json={
+                "identifier": "order-1",
+                "orderStatus": "Active",
+                "checkoutUrl": (
+                    "https://checkout.test/pay?token={AuthToken}"
+                    "&fail={RedirectUrlAuthFailure}&done={CompleteRedirectUrl}&pad=" + padding
+                ),
+            },
+        )
     )
     add_route = respx.post("https://legend.test/api/orders/order-1/orderitems/facility-use").mock(
         return_value=httpx.Response(
@@ -177,11 +190,18 @@ def test_sessions_book_books_the_selected_slot(monkeypatch) -> None:
 
     result = runner.invoke(app, ["--user", "sessions", "book", "--days", "1"])
 
+    expected_url = (
+        "https://checkout.test/pay?token=abc"
+        "&fail=https://checkout.test/&done=https://checkout.test/&pad=" + padding
+    )
     assert result.exit_code == 0, result.output
-    assert "Booked" in result.output
+    assert "reserved" in result.output.lower()
+    assert "20 minutes" in result.output
     assert "res-1" in result.output
+    assert "{AuthToken}" not in result.output
+    assert expected_url in result.output
     assert order_route.called
-    assert confirm_route.called
+    assert not confirm_route.called
     assert json.loads(add_route.calls[0].request.content) == {
         "slot": {"identifier": "slot-1", "facility": [{"identifier": "court-1"}]}
     }
@@ -207,3 +227,65 @@ def test_sessions_book_aborts_when_confirmation_declined(monkeypatch) -> None:
     assert result.exit_code == 0, result.output
     assert "cancelled" in result.output.lower()
     assert not order_route.called
+
+
+@respx.mock
+def test_basket_clear_removes_every_item(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _configure_env(monkeypatch, with_user=True)
+    respx.post("https://legend.test/oauth/token").mock(
+        return_value=httpx.Response(200, json={"access_token": "abc", "expires_in": 3600})
+    )
+    respx.post("https://legend.test/api/orders").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "identifier": "order-1",
+                "orderStatus": "Active",
+                "orderItem": [
+                    {"identifier": "item-1", "orderedItem": {"name": "Badminton"}},
+                    {"identifier": "item-2", "orderedItem": {"name": "Badminton"}},
+                ],
+            },
+        )
+    )
+    delete_one = respx.delete("https://legend.test/api/orders/order-1/orderitems/item-1").mock(
+        return_value=httpx.Response(204)
+    )
+    delete_two = respx.delete("https://legend.test/api/orders/order-1/orderitems/item-2").mock(
+        return_value=httpx.Response(204)
+    )
+    monkeypatch.setattr(typer, "confirm", lambda *args, **kwargs: True)
+
+    result = runner.invoke(app, ["--user", "basket", "clear"])
+
+    assert result.exit_code == 0, result.output
+    assert "Cleared 2 items" in result.output
+    assert delete_one.called
+    assert delete_two.called
+
+
+@respx.mock
+def test_basket_clear_reports_empty_basket(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _configure_env(monkeypatch, with_user=True)
+    respx.post("https://legend.test/oauth/token").mock(
+        return_value=httpx.Response(200, json={"access_token": "abc", "expires_in": 3600})
+    )
+    respx.post("https://legend.test/api/orders").mock(
+        return_value=httpx.Response(200, json={"identifier": "order-1", "orderItem": []})
+    )
+
+    result = runner.invoke(app, ["--user", "basket", "clear"])
+
+    assert result.exit_code == 0, result.output
+    assert "already empty" in result.output
+
+
+def test_basket_clear_requires_user(monkeypatch) -> None:
+    _configure_env(monkeypatch)
+
+    result = runner.invoke(app, ["basket", "clear"])
+
+    assert result.exit_code != 0
+    assert "--user" in result.output

@@ -408,6 +408,15 @@ class LegendClient:
         )
         return Order.model_validate(payload)
 
+    def remove_order_item(self, order_id: str, item_id: str) -> Any:
+        """Remove an item from the member's basket."""
+        return self._request(
+            "DELETE",
+            f"/orders/{quote(order_id, safe='')}/orderitems/{quote(item_id, safe='')}",
+            require_user=True,
+            record="remove_order_item",
+        )
+
     # ------------------------------------------------------------------
     # Reservations
     # ------------------------------------------------------------------

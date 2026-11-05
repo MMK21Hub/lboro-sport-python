@@ -223,6 +223,7 @@ class Order(LegendModel):
     identifier: str
     order_status: str | None = Field(default=None, alias="orderStatus")
     order_items: list[OrderItem] = Field(default_factory=list, alias="orderItem")
+    checkout_url: str | None = Field(default=None, alias="checkoutUrl")
 
 
 class Reservation(LegendModel):

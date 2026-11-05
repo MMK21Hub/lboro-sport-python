@@ -10,7 +10,7 @@ from rich.console import Console, Group
 from rich.table import Table
 from rich.text import Text
 
-from ..models import ActivityConcept, Slot
+from ..models import ActivityConcept, Offer, OrderItem, Slot
 
 console = Console()
 err_console = Console(stderr=True)
@@ -87,6 +87,11 @@ def _spaces_text(spaces: int | None) -> Text:
     return Text(_spaces_plain(spaces))
 
 
+def link_text(url: str) -> Text:
+    """A clickable hyperlink (rendered as an OSC 8 link where supported)."""
+    return Text(url, style=f"link {url}")
+
+
 def slot_line(row: dict[str, Any], *, wide: bool = False) -> str:
     """A one-line, plain-text summary of a slot row, mirroring the table columns."""
     parts = [
@@ -122,6 +127,31 @@ def _slot_cells(row: dict[str, Any], common_kind: str = "") -> tuple[Text, Text,
         _spaces_text(row.get("spaces")),
         Text(row.get("price_display") or "", style="dim"),
     )
+
+
+def _offer_amount(offer: Offer | None) -> str | None:
+    if offer is None:
+        return None
+    value = offer.value if offer.value is not None else offer.price
+    if value is None:
+        return None
+    currency = (offer.price_currency or offer.currency or "").strip()
+    return f"{value:.2f} {currency}".strip()
+
+
+def print_basket(items: list[OrderItem]) -> None:
+    table = Table(title="Basket")
+    table.add_column("Item")
+    table.add_column("When", style="dim")
+    table.add_column("Price", justify="right", style="dim")
+    for item in items:
+        ordered = item.ordered_item
+        name = (ordered.name if ordered and ordered.name else None) or item.identifier
+        when = (
+            ordered.start_date.strftime("%a %d %b %H:%M") if ordered and ordered.start_date else "-"
+        )
+        table.add_row(name, when, _offer_amount(item.amount) or "")
+    console.print(table)
 
 
 def _print_activities(concepts: list[ActivityConcept]) -> None:

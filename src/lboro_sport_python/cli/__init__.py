@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 
 from .. import __version__
+from .basket import basket_app
 from .context import CliContext
 from .sessions import sessions_app
 
@@ -17,6 +18,7 @@ app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(sessions_app, name="sessions")
+app.add_typer(basket_app, name="basket")
 
 
 def _show_version(value: bool) -> None:

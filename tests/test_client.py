@@ -164,6 +164,26 @@ def test_cancel_reservation_sends_patch_body() -> None:
 
 
 @respx.mock
+def test_remove_order_item_sends_delete(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    respx.post(TOKEN_URL).mock(
+        return_value=httpx.Response(200, json={"access_token": "user-token", "expires_in": 3600})
+    )
+    route = respx.delete(f"{BASE_URL}/orders/order-1/orderitems/item-1").mock(
+        return_value=httpx.Response(204)
+    )
+
+    with make_client() as client:
+        client.login("member@example.com", "password")
+        client.remove_order_item("order-1", "item-1")
+
+    assert route.called
+    request = route.calls[0].request
+    assert request.headers["Authorization"] == "Bearer user-token"
+    assert request.content == b""
+
+
+@respx.mock
 def test_booking_call_is_recorded_with_request_and_response(
     tmp_path: Path, monkeypatch
 ) -> None:

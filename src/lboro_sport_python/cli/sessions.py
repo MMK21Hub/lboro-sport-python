@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, time, timedelta
 from datetime import date as date_type
 from typing import Annotated, Any
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import typer
@@ -21,6 +22,7 @@ from .render import (
     _print_slots,
     console,
     err_console,
+    link_text,
     slot_line,
 )
 
@@ -172,7 +174,7 @@ def book(
         typer.Option("--wide", "-w", help="Include the slot ID in the picker."),
     ] = False,
 ) -> None:
-    """Pick an available slot and book it (requires --user)."""
+    """Pick an available slot and reserve it (requires --user; pay at the returned link)."""
     cli_ctx: CliContext = ctx.obj
     if not cli_ctx.use_user:
         raise typer.BadParameter(
@@ -228,9 +230,9 @@ def book(
 
         order = client.create_order()
         item = client.add_facility_use(order.identifier, match.slot.identifier, facility_ids)
-        confirmed = client.confirm_order(order.identifier)
+        checkout_url = _fill_checkout_url(order.checkout_url, client.access_token)
 
-    _report_booking(confirmed, item)
+    _report_booking(order, item, checkout_url)
 
 
 def _parse_start_day(value: str | None) -> date_type:
@@ -327,12 +329,36 @@ def _select_courts(detail: SlotDetail) -> list[str] | None:
     return list(picked) if picked else None
 
 
-def _report_booking(confirmed: Order, item: OrderItem) -> None:
-    console.print("[green]Booked.[/green]")
-    console.print(f"  Order: {confirmed.identifier} ({confirmed.order_status or 'unknown'})")
+def _fill_checkout_url(url: str | None, token: str | None) -> str | None:
+    """Substitute the placeholders Legend leaves in the checkout URL."""
+    if not url:
+        return None
+    parsed = urlparse(url)
+    origin = f"{parsed.scheme}://{parsed.netloc}/"
+    return (
+        url.replace("{AuthToken}", token or "")
+        .replace("{RedirectUrlAuthFailure}", origin)
+        .replace("{CompleteRedirectUrl}", origin)
+    )
+
+
+def _report_booking(order: Order, item: OrderItem, checkout_url: str | None) -> None:
+    console.print(
+        "[green]Slot reserved.[/green] Your basket is held for [bold]20 minutes[/bold] - "
+        "complete payment to confirm the booking."
+    )
+    console.print(f"  Order: {order.identifier} ({order.order_status or 'unknown'})")
     reservation_id = item.ordered_item.reservation_identifier if item.ordered_item else None
     if reservation_id:
         console.print(f"  Reservation: {reservation_id}")
+    if checkout_url:
+        console.print("  Pay here:")
+        console.print("  ", link_text(checkout_url), soft_wrap=True)
+    else:
+        console.print(
+            "  [dim]No checkout URL returned - pay via the Loughborough Sport app or "
+            "website to confirm the booking.[/dim]"
+        )
     console.print("[dim]Raw API responses saved under logs/.[/dim]", highlight=False)
 
 
