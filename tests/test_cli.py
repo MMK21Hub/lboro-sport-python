@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from rich.console import Console
 
-from lboro_sport_python import cli
+from lboro_sport_python.cli import render
 from lboro_sport_python.models import Slot
 
 
@@ -28,8 +28,8 @@ def _row(**overrides):
 
 
 def test_display_activity_strips_common_kind() -> None:
-    assert cli._display_activity("Badminton - Netball Centre", "Badminton") == "Netball Centre"
-    assert cli._display_activity("Badminton - Netball Centre") == "Badminton · Netball Centre"
+    assert render._display_activity("Badminton - Netball Centre", "Badminton") == "Netball Centre"
+    assert render._display_activity("Badminton - Netball Centre") == "Badminton · Netball Centre"
 
 
 def test_format_price_display() -> None:
@@ -38,16 +38,26 @@ def test_format_price_display() -> None:
         {"identifier": "s", "offer": [{"price": 14.5, "priceCurrency": "USD"}]}
     )
     chf = Slot.model_validate({"identifier": "s", "offer": [{"price": 14, "priceCurrency": "CHF"}]})
-    assert cli._format_price_display(gbp) == "£14"
-    assert cli._format_price_display(usd) == "$14.50"
-    assert cli._format_price_display(chf) == "14.00 CHF"
+    assert render._format_price_display(gbp) == "£14"
+    assert render._format_price_display(usd) == "$14.50"
+    assert render._format_price_display(chf) == "14.00 CHF"
+
+
+def test_slot_line_summarises_row() -> None:
+    line = render.slot_line(_row())
+    assert "16:00-17:00" in line
+    assert "Netball Centre" in line
+    assert "£14" in line
+    assert "4 left" in line
+    assert "slot-123" not in line
+    assert "slot-123" in render.slot_line(_row(), wide=True)
 
 
 def _capture(monkeypatch, rows, *, wide=False, days=1) -> str:
     output = io.StringIO()
     test_console = Console(file=output, width=80, force_terminal=False, color_system=None)
-    monkeypatch.setattr(cli, "console", test_console)
-    cli._print_slots(rows, days, wide=wide)
+    monkeypatch.setattr(render, "console", test_console)
+    render._print_slots(rows, days, wide=wide)
     return output.getvalue()
 
 

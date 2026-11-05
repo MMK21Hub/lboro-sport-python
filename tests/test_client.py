@@ -164,6 +164,67 @@ def test_cancel_reservation_sends_patch_body() -> None:
 
 
 @respx.mock
+def test_booking_call_is_recorded_with_request_and_response(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    respx.post(TOKEN_URL).mock(
+        return_value=httpx.Response(200, json={"access_token": "user-token", "expires_in": 3600})
+    )
+    respx.post(f"{BASE_URL}/orders").mock(
+        return_value=httpx.Response(
+            200,
+            json={"identifier": "order-1", "orderStatus": "Basket", "paymentUrl": "https://pay/1"},
+        )
+    )
+
+    with make_client() as client:
+        client.login("member@example.com", "password")
+        client.create_order()
+
+    record = json.loads(
+        next((tmp_path / "logs").glob("*-create_order.json")).read_text(encoding="utf-8")
+    )
+    assert record["event"] == "create_order"
+    assert record["request"] == {"method": "POST", "path": "/orders", "body": {}}
+    assert record["status"] == 200
+    assert record["response"]["paymentUrl"] == "https://pay/1"
+
+
+@respx.mock
+def test_failed_booking_call_is_recorded(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    respx.post(TOKEN_URL).mock(
+        return_value=httpx.Response(200, json={"access_token": "user-token", "expires_in": 3600})
+    )
+    respx.patch(f"{BASE_URL}/orders/1581940").mock(
+        return_value=httpx.Response(
+            400,
+            json={
+                "title": "Error processing the order",
+                "userMessage": "Order cannot be processed",
+            },
+        )
+    )
+
+    with make_client() as client:
+        client.login("member@example.com", "password")
+        with pytest.raises(LegendAPIError):
+            client.confirm_order("1581940")
+
+    record = json.loads(
+        next((tmp_path / "logs").glob("*-confirm_order-error.json")).read_text(encoding="utf-8")
+    )
+    assert record["status"] == 400
+    assert record["request"] == {
+        "method": "PATCH",
+        "path": "/orders/1581940",
+        "body": {"orderStatus": "Active"},
+    }
+    assert record["response"]["userMessage"] == "Order cannot be processed"
+
+
+@respx.mock
 def test_jwt_expiry_is_used_when_expires_in_is_missing() -> None:
     token = _fake_jwt(exp=4_000_000_000)
     token_route = respx.post(TOKEN_URL).mock(

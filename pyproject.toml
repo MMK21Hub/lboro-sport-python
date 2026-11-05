@@ -10,13 +10,14 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "questionary>=2.1.1",
     "rich>=13.9.0",
     "typer>=0.15.0",
 ]
 
 [project.scripts]
+lboro-sport = "lboro_sport_python.cli:main"
 lboro-bootstrap = "lboro_sport_python.bootstrap_cli:main"
-lboro-sessions = "lboro_sport_python.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8.3.0", "respx>=0.22.0", "ruff>=0.9.0"]

@@ -253,6 +253,7 @@ class LegendClient:
         params: Mapping[str, Any] | None = None,
         json_body: Mapping[str, Any] | None = None,
         require_user: bool = False,
+        record: str | None = None,
     ) -> Any:
         self._ensure_token(require_user=require_user)
         url = self._url(path)
@@ -265,6 +266,9 @@ class LegendClient:
             response = self._http.request(
                 method, url, params=params, json=json_body, headers=self._auth_headers()
             )
+
+        if record is not None:
+            self._record_response(record, method, path, json_body, response)
 
         if response.is_error:
             raise LegendAPIError.from_response(response)
@@ -279,18 +283,49 @@ class LegendClient:
                 body=response.text,
             ) from exc
 
-    def _record(self, event: str, payload: Any) -> None:
-        """Save the raw JSON the API returned, before it is coerced into models.
+    def _record_response(
+        self,
+        event: str,
+        method: str,
+        path: str,
+        request_body: Mapping[str, Any] | None,
+        response: httpx.Response,
+    ) -> None:
+        """Record a request and its response, including non-2xx failures."""
+        try:
+            payload: Any = response.json()
+        except ValueError:
+            payload = response.text or None
+        self._record(
+            event,
+            {
+                "event": event,
+                "request": {
+                    "method": method,
+                    "path": path,
+                    "body": dict(request_body) if request_body is not None else None,
+                },
+                "status": response.status_code,
+                "response": payload,
+            },
+            failed=response.is_error,
+        )
+
+    def _record(self, event: str, payload: Any, *, failed: bool = False) -> None:
+        """Save the raw JSON exchange, before it is coerced into models.
 
         Models ignore unknown fields, so this preserves anything the client does
-        not recognise (for example payment details) for later inspection.
+        not recognise (for example payment details) for later inspection. Failed
+        responses are kept too, with an ``-error`` suffix, so a booking that the
+        API rejects can be diagnosed after the fact.
         """
         _RECORD_DIR.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-        path = _RECORD_DIR / f"{stamp}-{event}.json"
+        tail = "-error" if failed else ""
+        path = _RECORD_DIR / f"{stamp}-{event}{tail}.json"
         suffix = 1
         while path.exists():
-            path = _RECORD_DIR / f"{stamp}-{event}-{suffix}.json"
+            path = _RECORD_DIR / f"{stamp}-{event}{tail}-{suffix}.json"
             suffix += 1
         path.write_text(
             json.dumps(payload, indent=2, ensure_ascii=False, default=str),
@@ -338,8 +373,9 @@ class LegendClient:
 
     def create_order(self) -> Order:
         """Create (or return) the member's active basket."""
-        payload = self._request("POST", "/orders", json_body={}, require_user=True)
-        self._record("create_order", payload)
+        payload = self._request(
+            "POST", "/orders", json_body={}, require_user=True, record="create_order"
+        )
         return Order.model_validate(payload)
 
     def add_facility_use(
@@ -357,8 +393,8 @@ class LegendClient:
             f"/orders/{quote(order_id, safe='')}/orderitems/facility-use",
             json_body={"slot": slot},
             require_user=True,
+            record="add_facility_use",
         )
-        self._record("add_facility_use", payload)
         return OrderItem.model_validate(payload)
 
     def confirm_order(self, order_id: str) -> Order:
@@ -368,8 +404,8 @@ class LegendClient:
             f"/orders/{quote(order_id, safe='')}",
             json_body={"orderStatus": "Active"},
             require_user=True,
+            record="confirm_order",
         )
-        self._record("confirm_order", payload)
         return Order.model_validate(payload)
 
     # ------------------------------------------------------------------
